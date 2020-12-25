@@ -1,5 +1,6 @@
 import torch.optim as optim
 import torch.nn as nn
+import torch
 import numpy as np
 
 
@@ -41,12 +42,14 @@ def inference_routine(net, dataloader, overview, tilesize):
     tilecountx = int(overview.shape[2] // tilesize)
     result = np.zeros((tilecounty, tilecountx))
 
+    net.eval()
+
     for i, data in enumerate(dataloader):
         inputs, inds = data
         outputs = net(inputs)
 
         for count in range(inds[0].shape[0]):
-            result[inds[0][count],inds[1][count]] = outputs[count,0]
+            result[inds[0][count],inds[1][count]] = torch.sigmoid(outputs[count,0])
 
     return result
 

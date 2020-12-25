@@ -13,11 +13,12 @@ import torch.nn.functional as F
 import copy
 
 def get_pretrained_model_criterion_optimizer_scheduler():
-    model_ft = models.resnet18(pretrained=True)
-    num_ftrs = model_ft.fc.in_features
+    model_ft = models.mobilenet_v2(pretrained=True)
+    model_ft.classifier = nn.Sequential(nn.Dropout(p=0.2, inplace=False), nn.Linear(in_features=1280, out_features=2, bias=True))
+    #num_ftrs = model_ft.fc.in_features
     # Here the size of each output sample is set to 2.
     # Alternatively, it can be generalized to nn.Linear(num_ftrs, len(class_names)).
-    model_ft.fc = nn.Linear(num_ftrs, 2)
+    #model_ft.fc = nn.Linear(num_ftrs, 2)
 
     criterion = nn.BCEWithLogitsLoss()
 
@@ -30,7 +31,7 @@ def get_pretrained_model_criterion_optimizer_scheduler():
     return model_ft.cuda(), criterion.cuda(), optimizer_ft, exp_lr_scheduler
 
 
-def train_model(model, criterion, optimizer, scheduler, dataloaders, isRGB = False, num_epochs=25):
+def train_model(model, criterion, optimizer, scheduler, dataloaders, isRGB = False, num_epochs=5):
     since = time.time()
 
     best_model_wts = copy.deepcopy(model.state_dict())
@@ -52,16 +53,23 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, isRGB = Fal
             running_loss = 0.0
             running_corrects = 0
 
+            count = 0
             # Iterate over data.
             for inputs, labels in dataloaders[phase]:
                 #inputs = inputs.to(device)
                 #labels = labels.to(device)
+                count += 1
+                print('All ' + phase + ': ')
+                print(len(dataloaders[phase].dataset))
+                print('Current ' + phase + ': ')
+                print(count)
 
                 # zero the parameter gradients
                 optimizer.zero_grad()
 
                 if not isRGB: inputs = torch.cat([inputs,inputs,inputs], dim = 1)
                 inputs = F.interpolate(inputs, size=224)
+                inputs = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])(inputs)
 
                 # forward
                 # track history if only in train
@@ -69,6 +77,8 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, isRGB = Fal
                     outputs = model(inputs)
                     _, preds = torch.max(outputs, 1)
                     loss = criterion(outputs, labels)
+
+                    print('loss: ' + str(loss.item()))
 
                     # backward + optimize only if in training phase
                     if phase == 'train':
@@ -84,7 +94,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, isRGB = Fal
             epoch_loss = running_loss / dataset_sizes[phase]
             #epoch_acc = running_corrects.double() / dataset_sizes[phase]
 
-            print('{} Loss: {:.4f} Acc: {:.4f}'.format(
+            print('{} Loss: {:.5f}'.format(
                 phase, epoch_loss))
 
             # deep copy the model

@@ -31,11 +31,11 @@ def get_data():
         for l in range(len(layer.data)):
             labels.append(layer.name)
 
-    dstrain, dsval = RectDataset.from_scratch(viewer.layers['Image'].data, rects, labels, 64, 3).split(0.1)
+    dstrain, dsval = RectDataset.from_scratch(viewer.layers['Image'].data, rects, labels, 64, 2).split(0.1)
 
 
 
-    dls = {'train' : torch.utils.data.DataLoader(dstrain, batch_size = 32, shuffle = True), 'val' : torch.utils.data.DataLoader(dsval, batch_size = 32, shuffle = True)}
+    dls = {'train' : torch.utils.data.DataLoader(dstrain, batch_size = 64, shuffle = True), 'val' : torch.utils.data.DataLoader(dsval, batch_size = 64, shuffle = True)}
 
     model_ft, criterion, optimizer_ft, exp_lr_scheduler = get_pretrained_model_criterion_optimizer_scheduler()
     train_model(model_ft, criterion, optimizer_ft, exp_lr_scheduler, dls)
