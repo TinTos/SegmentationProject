@@ -63,7 +63,7 @@ class TileDataset2(Dataset):
 
         tile = self.overview[:,by * self.tilesize : (by + 1) * self.tilesize, bx * self.tilesize : (bx + 1) * self.tilesize]
 
-        return torch.from_numpy(tile.astype(np.float32)), (by, bx)
+        return torch.from_numpy(tile.astype(np.float32)).cuda(), (by, bx)
 
 
 def reshape_for_inference(overview, tilesize):

@@ -46,9 +46,9 @@ def get_data():
 
     ds2 = TileDataset2(ovr, 64)
 
-    dl2 = torch.utils.data.DataLoader(ds2, batch_size = 1024)
+    dl2 = torch.utils.data.DataLoader(ds2, batch_size = 32)
 
-    inferred = inference_routine(net, dl2, ovr, 64)
+    inferred = inference_routine(model_ft, dl2, ovr, 64)
 
     viewer.add_image(inferred)
 

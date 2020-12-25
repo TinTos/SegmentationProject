@@ -13,20 +13,20 @@ import torch.nn.functional as F
 import copy
 
 def get_pretrained_model_criterion_optimizer_scheduler():
-    model_ft = models.mobilenet_v2(pretrained=True)
-    model_ft.classifier = nn.Sequential(nn.Dropout(p=0.2, inplace=False), nn.Linear(in_features=1280, out_features=2, bias=True))
-    #num_ftrs = model_ft.fc.in_features
+    model_ft = models.resnet18(pretrained=True)
+    #model_ft.classifier = nn.Sequential(nn.Dropout(p=0.2, inplace=False), nn.Linear(in_features=1280, out_features=2, bias=True))
+    num_ftrs = model_ft.fc.in_features
     # Here the size of each output sample is set to 2.
     # Alternatively, it can be generalized to nn.Linear(num_ftrs, len(class_names)).
-    #model_ft.fc = nn.Linear(num_ftrs, 2)
+    model_ft.fc = nn.Linear(num_ftrs, 2)
 
     criterion = nn.BCEWithLogitsLoss()
 
     # Observe that all parameters are being optimized
-    optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9)
+    optimizer_ft = optim.Adam(model_ft.parameters(), lr=0.1)
 
     # Decay LR by a factor of 0.1 every 7 epochs
-    exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=7, gamma=0.1)
+    exp_lr_scheduler = lr_scheduler.ReduceLROnPlateau(optimizer_ft)
 
     return model_ft.cuda(), criterion.cuda(), optimizer_ft, exp_lr_scheduler
 
@@ -84,12 +84,12 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, isRGB = Fal
                     if phase == 'train':
                         loss.backward()
                         optimizer.step()
+                        #scheduler.step(loss)
 
                 # statistics
                 running_loss += loss.item() * inputs.size(0)
                 #running_corrects += torch.sum(preds == labels.data)
-            if phase == 'train':
-                scheduler.step()
+
 
             epoch_loss = running_loss / dataset_sizes[phase]
             #epoch_acc = running_corrects.double() / dataset_sizes[phase]

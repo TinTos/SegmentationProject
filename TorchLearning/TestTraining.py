@@ -2,7 +2,8 @@ import torch.optim as optim
 import torch.nn as nn
 import torch
 import numpy as np
-
+import torch.nn.functional as F
+from torchvision import datasets, models, transforms
 
 def training_routine(net, dataloader):
     criterion = nn.BCELoss()
@@ -35,23 +36,32 @@ def training_routine(net, dataloader):
 
 
 def inference_routine(net, dataloader, overview, tilesize):
-    if (len(overview.shape) == 2):
-        overview = overview.reshape((1, overview.shape[0], overview.shape[1]))
+    with torch.no_grad():
+        if (len(overview.shape) == 2):
+            overview = overview.reshape((1, overview.shape[0], overview.shape[1]))
 
-    tilecounty = int(overview.shape[1] // tilesize)
-    tilecountx = int(overview.shape[2] // tilesize)
-    result = np.zeros((tilecounty, tilecountx))
+        tilecounty = int(overview.shape[1] // tilesize)
+        tilecountx = int(overview.shape[2] // tilesize)
+        result = np.zeros((tilecounty, tilecountx))
 
-    net.eval()
+        net.eval()
 
-    for i, data in enumerate(dataloader):
-        inputs, inds = data
-        outputs = net(inputs)
+        for i, data in enumerate(dataloader):
+            inputs, inds = data
 
-        for count in range(inds[0].shape[0]):
-            result[inds[0][count],inds[1][count]] = torch.sigmoid(outputs[count,0])
+            inputs = torch.cat([inputs, inputs, inputs], dim=1)
+            inputs = F.interpolate(inputs, size=224)
+            inputs = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])(inputs)
 
-    return result
+            outputs = net(inputs)
+
+            for count in range(inds[0].shape[0]):
+                result[inds[0][count],inds[1][count]] = torch.sigmoid(outputs[count,0])
+
+            del inputs
+            del outputs
+
+        return result
 
 
 
