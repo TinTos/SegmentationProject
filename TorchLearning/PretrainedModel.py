@@ -98,7 +98,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, isRGB = Fal
                 phase, epoch_loss))
 
             # deep copy the model
-            if phase == 'val' and epoch_loss > best_acc:
+            if phase == 'val' and epoch_loss < best_acc:
                 best_acc = epoch_loss
                 best_model_wts = copy.deepcopy(model.state_dict())
 
