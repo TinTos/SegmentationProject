@@ -27,26 +27,34 @@ def get_data():
     labels = []
     for i in range(1, len(viewer.layers)):
         layer = viewer.layers[i]
+        #if layer.data.shape[1] != 4: continue
         rects += layer.data
         for l in range(len(layer.data)):
             labels.append(layer.name)
 
     dstrain, dsval = RectDataset.from_scratch(viewer.layers['Image'].data, rects, labels, 64, 2).split(0.1)
 
-
-
     dls = {'train' : torch.utils.data.DataLoader(dstrain, batch_size = 64, shuffle = True), 'val' : torch.utils.data.DataLoader(dsval, batch_size = 64, shuffle = True)}
 
     model_ft, criterion, optimizer_ft, exp_lr_scheduler = get_pretrained_model_criterion_optimizer_scheduler()
-    train_model(model_ft, criterion, optimizer_ft, exp_lr_scheduler, dls)
+    model_ft = train_model(model_ft, criterion, optimizer_ft, exp_lr_scheduler, dls)
 
-    net = Net(64, np.unique(labels).shape[0])
+    #net = Net(64, np.unique(labels).shape[0])
 
     #training_routine(net, dl)
 
+    del dls
+    del criterion
+    del optimizer_ft
+    del exp_lr_scheduler
+    del rects
+    del labels
+    del dstrain
+    del dsval
+
     ds2 = TileDataset2(ovr, 64)
 
-    dl2 = torch.utils.data.DataLoader(ds2, batch_size = 32)
+    dl2 = torch.utils.data.DataLoader(ds2, batch_size = 256)
 
     inferred = inference_routine(model_ft, dl2, ovr, 64)
 

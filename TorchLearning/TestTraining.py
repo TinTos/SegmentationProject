@@ -53,10 +53,10 @@ def inference_routine(net, dataloader, overview, tilesize):
             inputs = F.interpolate(inputs, size=224)
             inputs = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])(inputs)
 
-            outputs = net(inputs)
+            outputs = torch.sigmoid(net(inputs)).cpu().numpy()
 
-            for count in range(inds[0].shape[0]):
-                result[inds[0][count],inds[1][count]] = torch.sigmoid(outputs[count,0])
+            #for count in range(inds[0].shape[0]):
+            result[inds[0][:],inds[1][:]] = outputs[:,0]
 
             del inputs
             del outputs
