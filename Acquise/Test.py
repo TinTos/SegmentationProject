@@ -36,6 +36,18 @@ def update_viewer():
 
 
 def get_data():
+    min_contrast = viewer.layers[0].contrast_limits[0]
+    max_contrast = viewer.layers[0].contrast_limits[1]
+    ovrscaled = ovr.copy()
+    ovrscaled[ovrscaled < min_contrast] = min_contrast
+    ovrscaled[ovrscaled > max_contrast] = max_contrast
+    ovrscaled -= min_contrast
+    ovrscaled /= (max_contrast - min_contrast)
+
+    min_debug = np.min(ovrscaled)
+    max_debug = np.max(ovrscaled)
+
+
     rects = []
     labels = []
     for i in range(1, len(viewer.layers)):
@@ -65,7 +77,7 @@ def get_data():
     del dstrain
     del dsval
 
-    ds2 = TileDataset2(ovr, 64)
+    ds2 = TileDataset2(ovrscaled, 64)
 
     inference_batchsize = 256
     inference_batchsize_found = False
@@ -73,7 +85,7 @@ def get_data():
         #try:
     torch.cuda.empty_cache()
     dl2 = torch.utils.data.DataLoader(ds2, batch_size=int(inference_batchsize))
-    inferred = inference_routine(model_ft, dl2, ovr, 64)
+    inferred = inference_routine(model_ft, dl2, ovrscaled, 64)
     inference_batchsize_found = True
         #except:
             #print("OS error: {0}".format(err))
@@ -112,11 +124,13 @@ if __name__ =='__main__':
     if app == None:
         app = QApplication([])
 
-    ovr=np.load('Outputdata/overview.npy')[0:6000,0:6000]
-    lb=np.load('Outputdata/lable.npy')
+
+    ovr=np.load('Outputdata/overview.npy')[0:4000,0:4000]
+
+    #lb=np.load('Outputdata/lable.npy')
     #image_resized = resize(ovr, (ovr.shape[0] // 16, ovr.shape[1] // 16), anti_aliasing=True)
 
-    lbrs = np.load('Outputdata/label_2000_4000_fullres.npy')
+    #lbrs = np.load('Outputdata/label_2000_4000_fullres.npy')
     #lbrs = resize_large(lb, ovr.shape)
 
     viewer = napari.view_image(ovr, rgb=False)

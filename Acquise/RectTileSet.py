@@ -24,7 +24,7 @@ class RectTileSet:
 
     def __getitem__(self, item):
         if self.inds is not None: item = self.inds[item]
-        index_x = int(item % self.count_y)
+        index_x = int(item % self.count_x)
         index_y = int((item % (self.count_x * self.count_y)) // self.count_x)
         index_shift_x = int(item // (self.count_x * self.count_y))
         index_shift_y = int(item // (self.count_x * self.count_y * self.shiftcount))

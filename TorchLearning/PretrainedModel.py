@@ -15,10 +15,18 @@ import copy
 def get_pretrained_model_criterion_optimizer_scheduler():
     model_ft = models.resnet18(pretrained=True)
     #model_ft.classifier = nn.Sequential(nn.Dropout(p=0.2, inplace=False), nn.Linear(in_features=1280, out_features=2, bias=True))
-    num_ftrs = model_ft.fc.in_features
+    #num_ftrs = model_ft.fc.in_features
     # Here the size of each output sample is set to 2.
     # Alternatively, it can be generalized to nn.Linear(num_ftrs, len(class_names)).
-    model_ft.fc = nn.Linear(num_ftrs, 2)
+    #model_ft.fc = nn.Linear(num_ftrs, 2)
+
+    for param in model_ft.parameters():
+        param.requires_grad = False
+
+    # Parameters of newly constructed modules have requires_grad=True by default
+    num_ftrs = model_ft.fc.in_features
+    model_ft.fc = nn.Linear(num_ftrs, 100)
+    model_ft = nn.Sequential(model_ft, nn.ReLU(), nn.Linear(100,2))
 
     criterion = nn.BCEWithLogitsLoss()
 
@@ -31,7 +39,7 @@ def get_pretrained_model_criterion_optimizer_scheduler():
     return model_ft.cuda(), criterion.cuda(), optimizer_ft, exp_lr_scheduler
 
 
-def train_model(model, criterion, optimizer, scheduler, dataloaders, isRGB = False, num_epochs=5):
+def train_model(model, criterion, optimizer, scheduler, dataloaders, isRGB = False, num_epochs=7):
     since = time.time()
 
     best_model_wts = copy.deepcopy(model.state_dict())
@@ -67,7 +75,13 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, isRGB = Fal
                 # zero the parameter gradients
                 optimizer.zero_grad()
 
-                if not isRGB: inputs = torch.cat([inputs,inputs,inputs], dim = 1)
+                #if not isRGB: inputs = torch.cat([inputs,inputs,inputs], dim = 1)
+                if not isRGB: inputs = inputs.repeat(1,3,1,1)
+                inputs = inputs - inputs.view(inputs.shape[0],3,inputs.shape[-1]*inputs.shape[-1]).min(axis=2)[0].reshape(inputs.shape[0],3,1,1)
+                inputs = inputs / inputs.view(inputs.shape[0],3,inputs.shape[-1]*inputs.shape[-1]).max(axis=2)[0].reshape(inputs.shape[0],3,1,1)
+
+                #print(inputs[0])
+
                 inputs = F.interpolate(inputs, size=224)
                 inputs = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])(inputs)
 
@@ -84,7 +98,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, isRGB = Fal
                     if phase == 'train':
                         loss.backward()
                         optimizer.step()
-                        #scheduler.step(loss)
+                        scheduler.step(loss)
 
                 # statistics
                 running_loss += loss.item() * inputs.size(0)
