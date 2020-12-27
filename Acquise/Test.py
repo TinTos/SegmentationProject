@@ -1,6 +1,10 @@
 # instantiate Qt GUI
 import sys
+from _thread import start_new_thread
+
 import napari
+from PySide2.QtCore import QObject
+from PySide2.QtCore import Signal
 from skimage.data import astronaut
 from skimage.transform import rescale, resize, downscale_local_mean
 from PySide2.QtWidgets import QApplication, QMainWindow, QPushButton
@@ -8,19 +12,28 @@ import scipy.misc
 import numpy as np
 from Dataloading.RectDataset import RectDataset
 import torch
-from TorchLearning.TestModel import Net
-from TorchLearning.TestTraining import training_routine
 from TorchLearning.TestTraining import inference_routine
-from Dataloading.Dataset import reshape_for_inference, TileDataset2
-from Dataloading.Dataset import reshape_from_inference
+from Dataloading.Dataset import TileDataset2
 from TorchLearning.PretrainedModel import train_model
 from TorchLearning.PretrainedModel import get_pretrained_model_criterion_optimizer_scheduler
+import queue
+
+#somewhere accessible to both:
 
 def resize_label_large(input, shape):
     r=resize(input, shape, 0)
     r[r<np.mean(r)]=0
     r[r>0]=1
     return r.astype('uint')
+
+def start_training():
+    start_new_thread(get_data)
+
+
+def update_viewer():
+    try: viewer.add_image(mask)
+    except: print('Something wen wrong')
+
 
 def get_data():
     rects = []
@@ -54,36 +67,68 @@ def get_data():
 
     ds2 = TileDataset2(ovr, 64)
 
-    dl2 = torch.utils.data.DataLoader(ds2, batch_size = 256)
-
+    inference_batchsize = 256
+    inference_batchsize_found = False
+    #while(not inference_batchsize_found):
+        #try:
+    torch.cuda.empty_cache()
+    dl2 = torch.utils.data.DataLoader(ds2, batch_size=int(inference_batchsize))
     inferred = inference_routine(model_ft, dl2, ovr, 64)
+    inference_batchsize_found = True
+        #except:
+            #print("OS error: {0}".format(err))
+            #inference_batchsize /= 2
 
-    viewer.add_image(inferred)
+    global mask
+
+    mask = inferred
+
+    f.finished.emit()
 
 
-    #return ds
+def from_dummy_thread(func_to_call_from_main_thread):
+    callback_queue.put(func_to_call_from_main_thread)
+
+def from_main_thread_blocking():
+    callback = callback_queue.get() #blocks until an item is available
+    callback()
+
+def from_main_thread_nonblocking():
+    while True:
+        try:
+            callback = callback_queue.get(block=False) #doesn't block
+        except queue.Empty: #raised when queue is empty
+            continue
+        callback()
+
+class Communicate(QObject):
+    finished = Signal()
 
 if __name__ =='__main__':
+    callback_queue = queue.Queue()
+
     # create the viewer and display the image
     app = QApplication.instance()
     if app == None:
         app = QApplication([])
 
-    ovr=np.load('Outputdata/overview.npy')
+    ovr=np.load('Outputdata/overview.npy')[0:6000,0:6000]
     lb=np.load('Outputdata/lable.npy')
     #image_resized = resize(ovr, (ovr.shape[0] // 16, ovr.shape[1] // 16), anti_aliasing=True)
 
     lbrs = np.load('Outputdata/label_2000_4000_fullres.npy')
     #lbrs = resize_large(lb, ovr.shape)
 
-
     viewer = napari.view_image(ovr, rgb=False)
 
     button = QPushButton("Click me")
-    button.clicked.connect(get_data)
+    button.clicked.connect(start_training)
     button.show()
 
+    f = Communicate()
+    f.finished.connect(update_viewer)
 
+    #while(True):
     #viewer.add_layer(lb)
     #viewer.layers[1].editable=True
     #viewer.add_labels(lbrs)
