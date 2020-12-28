@@ -55,10 +55,11 @@ def inference_routine(net, dataloader, overview, tilesize, isRGB = False):
 
             inputs = preprocess(inputs, isRGB)
 
-            outputs = torch.sigmoid(net(inputs)).cpu().numpy()
+            _, outputs = torch.max(torch.sigmoid(net(inputs)), 1)
+            outputs = outputs.cpu().numpy()
 
             for count in range(inds[0].shape[0]):
-                result[inds[0][count] * tilesize : (inds[0][count] + 1) * tilesize, inds[1][count] * tilesize : (inds[1][count] + 1) * tilesize] = outputs[count,0]
+                result[inds[0][count] * tilesize : (inds[0][count] + 1) * tilesize, inds[1][count] * tilesize : (inds[1][count] + 1) * tilesize] = outputs[count]
 
             del inputs
             del outputs

@@ -6,13 +6,14 @@ from TorchLearning.PretrainedModel import preprocess
 
 class LitModel(LightningModule):
 
-    def __init__(self, num_classes, learning_rate):
+    def __init__(self, num_classes, learning_rate, training_size, batch_size):
         super().__init__()
         self.classifier = models.resnet18(pretrained=True)
         num_ftrs = self.classifier.fc.in_features
         self.classifier.fc = nn.Linear(num_ftrs, num_classes)
         self.learning_rate = learning_rate
         self.lossobject = nn.BCEWithLogitsLoss()
+        self.stepsize = 4*int(training_size // batch_size)
 
     def forward(self, x):
         x = self.classifier(x)
@@ -20,7 +21,14 @@ class LitModel(LightningModule):
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr= self.learning_rate)
-        return optimizer
+        scheduler = {
+                'scheduler': torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr = self.learning_rate, total_steps = 2 * self.stepsize),
+                'interval': 'step',
+                'frequency': 1
+        }
+
+
+        return [optimizer], [scheduler]
 
     def training_step(self, batch, batch_idx, isRGB = False):
         x, y = batch
