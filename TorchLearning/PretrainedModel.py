@@ -3,35 +3,22 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.optim import lr_scheduler
-import numpy as np
-import torchvision
 from torchvision import datasets, models, transforms
-import matplotlib.pyplot as plt
 import time
-import os
 import torch.nn.functional as F
 import copy
 
 def get_pretrained_model_criterion_optimizer_scheduler():
     model_ft = models.resnet18(pretrained=True)
-    #model_ft.classifier = nn.Sequential(nn.Dropout(p=0.2, inplace=False), nn.Linear(in_features=1280, out_features=2, bias=True))
-    #num_ftrs = model_ft.fc.in_features
-    # Here the size of each output sample is set to 2.
-    # Alternatively, it can be generalized to nn.Linear(num_ftrs, len(class_names)).
-    #model_ft.fc = nn.Linear(num_ftrs, 2)
-
-    for param in model_ft.parameters():
-        param.requires_grad = False
 
     # Parameters of newly constructed modules have requires_grad=True by default
     num_ftrs = model_ft.fc.in_features
-    model_ft.fc = nn.Linear(num_ftrs, 100)
-    model_ft = nn.Sequential(model_ft, nn.ReLU(), nn.Linear(100,2))
+    model_ft.fc = nn.Linear(num_ftrs, 2)
 
     criterion = nn.BCEWithLogitsLoss()
 
     # Observe that all parameters are being optimized
-    optimizer_ft = optim.Adam(model_ft.parameters(), lr=0.1)
+    optimizer_ft = optim.Adam(model_ft.parameters(), lr=0.001)
 
     # Decay LR by a factor of 0.1 every 7 epochs
     exp_lr_scheduler = lr_scheduler.ReduceLROnPlateau(optimizer_ft)
@@ -43,7 +30,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, isRGB = Fal
     since = time.time()
 
     best_model_wts = copy.deepcopy(model.state_dict())
-    best_acc = np.inf
+    best_acc = 0
 
     dataset_sizes = {'train' : len(dataloaders['train'].dataset), 'val' : len(dataloaders['val'].dataset) }
 
@@ -76,14 +63,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, isRGB = Fal
                 optimizer.zero_grad()
 
                 #if not isRGB: inputs = torch.cat([inputs,inputs,inputs], dim = 1)
-                if not isRGB: inputs = inputs.repeat(1,3,1,1)
-                inputs = inputs - inputs.view(inputs.shape[0],3,inputs.shape[-1]*inputs.shape[-1]).min(axis=2)[0].reshape(inputs.shape[0],3,1,1)
-                inputs = inputs / inputs.view(inputs.shape[0],3,inputs.shape[-1]*inputs.shape[-1]).max(axis=2)[0].reshape(inputs.shape[0],3,1,1)
-
-                #print(inputs[0])
-
-                inputs = F.interpolate(inputs, size=224)
-                inputs = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])(inputs)
+                inputs = preprocess(inputs, isRGB)
 
                 # forward
                 # track history if only in train
@@ -102,18 +82,19 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, isRGB = Fal
 
                 # statistics
                 running_loss += loss.item() * inputs.size(0)
-                #running_corrects += torch.sum(preds == labels.data)
+                _, comparisonlabel = torch.max(labels,1)
+                running_corrects += torch.sum(preds == comparisonlabel)
 
 
             epoch_loss = running_loss / dataset_sizes[phase]
-            #epoch_acc = running_corrects.double() / dataset_sizes[phase]
+            epoch_acc = running_corrects.double() / dataset_sizes[phase]
 
             print('{} Loss: {:.5f}'.format(
                 phase, epoch_loss))
 
             # deep copy the model
-            if phase == 'val' and epoch_loss < best_acc:
-                best_acc = epoch_loss
+            if phase == 'val' and epoch_acc > best_acc:
+                best_acc = epoch_acc
                 best_model_wts = copy.deepcopy(model.state_dict())
 
         print()
@@ -126,3 +107,14 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, isRGB = Fal
     # load best model weights
     model.load_state_dict(best_model_wts)
     return model
+
+
+def preprocess(inputs, isRGB):
+    if not isRGB: inputs = inputs.repeat(1, 3, 1, 1)
+    inputs = inputs - inputs.view(inputs.shape[0], 3, inputs.shape[-1] * inputs.shape[-1]).min(axis=2)[0].reshape(
+        inputs.shape[0], 3, 1, 1)
+    inputs = inputs / inputs.view(inputs.shape[0], 3, inputs.shape[-1] * inputs.shape[-1]).max(axis=2)[0].reshape(
+        inputs.shape[0], 3, 1, 1)
+    inputs = F.interpolate(inputs, size=224)
+    inputs = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])(inputs)
+    return inputs

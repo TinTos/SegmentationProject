@@ -5,6 +5,7 @@ import numpy as np
 import torch.nn.functional as F
 from torchvision import datasets, models, transforms
 
+from TorchLearning.PretrainedModel import preprocess
 def training_routine(net, dataloader):
     criterion = nn.BCELoss()
     optimizer = optim.Adam(net.parameters(), lr=0.001)
@@ -52,12 +53,7 @@ def inference_routine(net, dataloader, overview, tilesize, isRGB = False):
         for i, data in enumerate(dataloader):
             inputs, inds = data
 
-            if not isRGB: inputs = inputs.repeat(1,3,1,1)
-            inputs = inputs - inputs.view(inputs.shape[0],3,inputs.shape[-1]*inputs.shape[-1]).min(axis=2)[0].reshape(inputs.shape[0],3,1,1)
-            inputs = inputs / inputs.view(inputs.shape[0],3,inputs.shape[-1]*inputs.shape[-1]).max(axis=2)[0].reshape(inputs.shape[0],3,1,1)
-
-            inputs = F.interpolate(inputs, size=224)
-            inputs = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])(inputs)
+            inputs = preprocess(inputs, isRGB)
 
             outputs = torch.sigmoid(net(inputs)).cpu().numpy()
 
