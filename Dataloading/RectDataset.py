@@ -74,8 +74,8 @@ class RectDataset(torch.utils.data.Dataset):
 
         tile = self.overview[:, tiledata['miny'] : tiledata['maxy'], tiledata['minx'] : tiledata['maxx']]
 
-        tensor_x = torch.from_numpy(tile.astype(np.float32)).cuda()
-        tensor_y = torch.tensor(self.labelsencoded[rectindex].astype(np.float32)).cuda()
+        tensor_x = torch.from_numpy(tile.astype(np.float32))
+        tensor_y = torch.tensor(self.labelsencoded[rectindex].astype(np.float32))
 
         return tensor_x, tensor_y
 

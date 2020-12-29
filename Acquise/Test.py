@@ -33,6 +33,7 @@ def train_and_infer():
 
     #get data
     labels, rects = get_rects_and_labels()
+    numclasses = len(np.unique(labels))
     dstrain, dsval = RectDataset.from_scratch(viewer.layers['Image'].data, rects, labels, 64, 2).split(0.1)
     dls = {'train' : torch.utils.data.DataLoader(dstrain, batch_size = 64, shuffle = True), 'val' : torch.utils.data.DataLoader(dsval, batch_size = 64, shuffle = True)}
 
@@ -40,8 +41,8 @@ def train_and_infer():
     #model_ft, criterion, optimizer_ft, exp_lr_scheduler = get_pretrained_model_criterion_optimizer_scheduler()
     #model_ft = train_model(model_ft, criterion, optimizer_ft, exp_lr_scheduler, dls)
 
-    litmodel = LitModel(2, 0.1, len(dstrain), 64)
-    trainer = Trainer(gpus=1, auto_lr_find=True, max_epochs=3)
+    litmodel = LitModel(numclasses, 0.1, len(dstrain), 64)
+    trainer = Trainer(gpus=1, auto_lr_find=True, max_epochs=6)
     #pytorch_lightning.tuner.lr_finder.lr_find(trainer, litmodel, train_dataloader= dls['train'], val_dataloaders=dls['val'])
     trainer.tune(litmodel, train_dataloader=dls['train'], val_dataloaders=dls['val'])
     trainer.fit(litmodel, dls['train'], dls['val'])

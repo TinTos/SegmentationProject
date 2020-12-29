@@ -118,3 +118,13 @@ def preprocess(inputs, isRGB):
     inputs = F.interpolate(inputs, size=224)
     inputs = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])(inputs)
     return inputs
+
+def preprocess_for_custom(inputs, isRGB = False):
+    #if not isRGB: inputs = inputs.repeat(1, 3, 1, 1)
+
+    inputs = inputs - inputs.view(inputs.shape[0], 1, inputs.shape[-1] * inputs.shape[-1]).min(axis=2)[0].reshape(
+        inputs.shape[0], 1, 1, 1)
+    inputs = inputs / inputs.view(inputs.shape[0], 1, inputs.shape[-1] * inputs.shape[-1]).max(axis=2)[0].reshape(
+        inputs.shape[0], 1, 1, 1)
+
+    return inputs

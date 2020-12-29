@@ -2,10 +2,8 @@ import torch.optim as optim
 import torch.nn as nn
 import torch
 import numpy as np
-import torch.nn.functional as F
-from torchvision import datasets, models, transforms
-
 from TorchLearning.PretrainedModel import preprocess
+from TorchLearning.PretrainedModel import preprocess_for_custom
 def training_routine(net, dataloader):
     criterion = nn.BCELoss()
     optimizer = optim.Adam(net.parameters(), lr=0.001)
