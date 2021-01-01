@@ -1,24 +1,28 @@
 from Dataloading.RectTileSet import RectTileSet
+from Dataloading.PolyTileSet import PolyTileSet
 import torch
 import torch.utils.data
 import numpy as np
 from copy import deepcopy
 
-class RectDataset(torch.utils.data.Dataset):
+class PolyDataset(torch.utils.data.Dataset):
 
     @classmethod
-    def from_scratch(cls, overview, rectangles, labels, tilesize, shiftcount):
+    def from_scratch(cls, overview, polygons, labels, tilesize, shiftcount, areathresh):
         shiftlength = int(tilesize // shiftcount)
         tilesize = tilesize
 
-        rectsets = []
-        for r in rectangles:
-            rectsets.append(RectTileSet(tilesize, r, shiftcount, shiftlength))
+        polysets = []
+        for p in polygons:
+            if cls.is_rectangle(p):
+                polysets.append(RectTileSet(tilesize, p, shiftcount, shiftlength))
+            else:
+                polysets.append(PolyTileSet(tilesize, p, shiftcount, shiftlength, areathresh))
 
-        return cls(overview, rectsets, labels)
+        return cls(overview, polysets, labels)
 
-    def __init__(self, overview, rectsets, labels):
-        super(RectDataset).__init__()
+    def __init__(self, overview, polysets, labels):
+        super(PolyDataset).__init__()
 
         if len(overview.shape) == 2:
             self.channelnumber = 1
@@ -30,33 +34,40 @@ class RectDataset(torch.utils.data.Dataset):
         self.labels = labels
         self.labelsencoded = self.one_hot_encoding()
 
-        self.rectsets = rectsets
+        self.polysets = polysets
 
 
     def __len__(self):
         result = 0
-        for r in self.rectsets:
+        for r in self.polysets:
             result += len(r)
 
         return result
 
     def __getitem__(self, item):
-        rectindex = -1
+        polyindex = -1
         while(item >= 0):
-            rectindex += 1
-            item -= len(self.rectsets[rectindex])
+            polyindex += 1
+            item -= len(self.polysets[polyindex])
 
-        item += len(self.rectsets[rectindex])
+        item += len(self.polysets[polyindex])
 
-        tiledata = self.rectsets[rectindex][item]
+        tiledata = self.polysets[polyindex][item]
 
         tile = self.overview[:, tiledata['miny'] : tiledata['maxy'], tiledata['minx'] : tiledata['maxx']]
 
         tensor_x = torch.from_numpy(tile.astype(np.float32))
-        tensor_y = torch.tensor(self.labelsencoded[rectindex].astype(np.float32))
+        tensor_y = torch.tensor(self.labelsencoded[polyindex].astype(np.float32))
 
         return tensor_x, tensor_y
 
+
+    @classmethod
+    def is_rectangle(cls, polygon):
+        result = len(np.unique(polygon[:,1])) == 2
+        result &= len(np.unique(polygon[:,0])) == 2
+
+        return result
 
     def one_hot_encoding(self):
         unique = np.unique(self.labels)
@@ -69,7 +80,7 @@ class RectDataset(torch.utils.data.Dataset):
     def split(self, valpercent):
         rsvals = []
         rstrains = []
-        for rs in self.rectsets:
+        for rs in self.polysets:
             shuffled = np.random.permutation(len(rs))
             ind = int(valpercent * len(rs))
 
@@ -85,7 +96,7 @@ class RectDataset(torch.utils.data.Dataset):
             rsvals.append(rsval)
             rstrains.append(rstrain)
 
-        return RectDataset(self.overview, rstrains, self.labels), RectDataset(self.overview, rsvals, self.labels)
+        return PolyDataset(self.overview, rstrains, self.labels), PolyDataset(self.overview, rsvals, self.labels)
 
 
 

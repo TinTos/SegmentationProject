@@ -2,12 +2,13 @@
 import sys
 from _thread import start_new_thread
 import napari
+from napari.layers.shapes.shapes import Shapes
 import pytorch_lightning
 from PySide2.QtCore import QObject
 from PySide2.QtCore import Signal
 from PySide2.QtWidgets import QApplication, QPushButton
 import numpy as np
-from Dataloading.RectDataset import RectDataset
+from Dataloading.PolyDataset import PolyDataset
 import torch
 from TorchLearning.TestTraining import inference_routine
 from Dataloading.Dataset import TileDataset2
@@ -15,6 +16,7 @@ from TorchLearning.LightningModule import LitModel
 from pytorch_lightning import Trainer
 from TorchLearning.PretrainedModel import train_model
 from TorchLearning.PretrainedModel import get_pretrained_model_criterion_optimizer_scheduler
+from PIL import Image
 
 def start_training():
     start_new_thread(train_and_infer)
@@ -34,7 +36,7 @@ def train_and_infer():
     #get data
     labels, rects = get_rects_and_labels()
     numclasses = len(np.unique(labels))
-    dstrain, dsval = RectDataset.from_scratch(viewer.layers['Image'].data, rects, labels, 64, 2).split(0.1)
+    dstrain, dsval = PolyDataset.from_scratch(viewer.layers[0].data, rects, labels, 64, 2, 0.75).split(0.1)
     dls = {'train' : torch.utils.data.DataLoader(dstrain, batch_size = 64, shuffle = True), 'val' : torch.utils.data.DataLoader(dsval, batch_size = 64, shuffle = True)}
 
     #train
@@ -107,9 +109,25 @@ if __name__ =='__main__':
     if app == None:
         app = QApplication([])
 
-    ovr=np.load('Outputdata/overview.npy')[0:4000,0:4000]
+    #ovr=np.load('Outputdata/overview.npy')[0:4000,0:4000]
+    ImageRaw = np.array(Image.open("C:\\Users\\mtoss\\Documents\\DTCleanup\\SmartCyteAlt\\Probe1_DL.png"))
+
+    ovr = np.zeros((ImageRaw.shape[0],ImageRaw.shape[1]))
+    #ovr[0,:,:] = ImageRaw[:,:,0]
+    ovr[:,:] = ImageRaw[:,:,1]
+    #ovr[2,:,:] = ImageRaw[:,:,2]
+
+    del ImageRaw
 
     viewer = napari.view_image(ovr, rgb=False)
+    viewer.layers.append(Shapes(np.load('1.npy', allow_pickle=True), name = '1', shape_type='polygon', face_color='blue'))
+    viewer.layers.append(Shapes(np.load('2.npy', allow_pickle=True), name = '2', shape_type='polygon', face_color='red'))
+    viewer.layers.append(Shapes(np.load('3.npy', allow_pickle=True), name = '3', shape_type='polygon', face_color='green'))
+    viewer.layers.append(Shapes(np.load('4.npy', allow_pickle=True), name = '4', shape_type='polygon', face_color='cyan'))
+    viewer.layers.append(Shapes(np.load('5.npy', allow_pickle=True), name = '5', shape_type='polygon', face_color='blue'))
+    viewer.layers.append(Shapes(np.load('6.npy', allow_pickle=True), name = '6', shape_type='polygon', face_color='pink'))
+    viewer.layers.append(Shapes(np.load('7.npy', allow_pickle=True), name = '7', shape_type='polygon', face_color='blue'))
+    viewer.layers.append(Shapes(np.load('8.npy', allow_pickle=True), name = '8', shape_type='polygon', face_color='blue'))
 
     button = QPushButton("Start!")
     button.clicked.connect(start_training)

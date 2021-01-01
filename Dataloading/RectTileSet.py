@@ -1,7 +1,8 @@
 import numpy as np
 
 class RectTileSet:
-    def __init__(self, size, miny, minx, maxy, maxx, shiftcount, shiftlength):
+    def __init__(self, size, points, shiftcount, shiftlength):
+        (miny, minx), (maxy, maxx) = self.order_rectangle(points)
         self.size = size
         self.minx = int(minx)
         self.maxx = int(maxx)
@@ -62,6 +63,15 @@ class RectTileSet:
             Warning('Wrong indices for splitting rectangular set')
             return
         self.inds = inds
+
+    @classmethod
+    def order_rectangle(cls, rectangle):
+        minx = min(rectangle[:, 1])
+        maxx = max(rectangle[:, 1])
+        miny = min(rectangle[:, 0])
+        maxy = max(rectangle[:, 0])
+
+        return (miny, minx), (maxy, maxx)
 
 
 
