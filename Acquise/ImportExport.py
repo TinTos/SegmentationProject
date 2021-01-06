@@ -18,3 +18,16 @@ def importdata(path):
     overview = np.load(path + '//overview')
 
     return overview, polys, labels
+
+
+def importdatafromfolder(directory):
+    polys = []
+    labels = []
+    for filename in os.listdir(directory):
+        if filename.endswith(".npy"):
+            polys.append(np.load(directory + '//' + filename))
+            labels.append(filename.split('.')[0])
+        else:
+            continue
+
+    return polys, labels
