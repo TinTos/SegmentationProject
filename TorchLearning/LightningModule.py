@@ -6,11 +6,17 @@ from TorchLearning.PretrainedModel import preprocess
 
 class LitModel(LightningModule):
 
-    def __init__(self, num_classes, learning_rate, training_size, batch_size):
+    def __init__(self, num_classes, learning_rate, training_size, batch_size,model=None):
         super().__init__()
-        self.classifier = models.resnet18(pretrained=True)
-        num_ftrs = self.classifier.fc.in_features
-        self.classifier.fc = nn.Linear(num_ftrs, num_classes)
+        if model is 'renset34':
+            self.classifier = models.resnet34(pretrained=True)
+        else:
+            self.classifier = models.resnet18(pretrained=True)
+
+        self.classifier = nn.Sequential(self.classifier, nn.Linear(1000, num_classes))
+        #self.classifier.load_state_dict(torch.load('LastModel'))
+        #num_ftrs = self.classifier.fc.in_features
+        #self.classifier.fc = nn.Linear(num_ftrs, num_classes)
         self.learning_rate = learning_rate
         self.lossobject = nn.BCEWithLogitsLoss()
         self.stepsize = 4*int(training_size // batch_size)

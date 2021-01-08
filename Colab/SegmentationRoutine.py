@@ -8,7 +8,7 @@ from TorchLearning.LightningModule import LitModel
 from TorchLearning.TestTraining import inference_routine
 
 
-def segment(overview, polys, labels):
+def segment(overview, polys, labels, tilesize=64, shiftcount=3, coveringthreshold=0.75):
     numclasses = len(np.unique(labels))
 
     dstrain, dsval = PolyDataset.from_scratch(overview, polys, labels, 64, 3, 0.75).split(0.1)

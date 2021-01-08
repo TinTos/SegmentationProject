@@ -21,13 +21,16 @@ def importdata(path):
 
 
 def importdatafromfolder(directory):
-    polys = []
-    labels = []
+    resultpolys = []
+    resultlabels = []
     for filename in os.listdir(directory):
         if filename.endswith(".npy"):
-            polys.append(np.load(directory + '//' + filename))
-            labels.append(filename.split('.')[0])
+            polys=np.load(directory + '//' + filename,allow_pickle=True)
+            resultpolys+=list(polys)
+            label=filename.split('.')[0]
+            for l in range(len(polys)):
+                resultlabels.append(label)
         else:
             continue
 
-    return polys, labels
+    return resultpolys, resultlabels

@@ -7,8 +7,8 @@ from PySide2.QtCore import QObject
 from PySide2.QtCore import Signal
 from PySide2.QtWidgets import QApplication, QPushButton
 import numpy as np
-from Acquise.Processing import scale_with_limits, LoadSingleChannelPng
-from Acquise.SegmentationRoutine import segment
+from Colab.Processing import scale_with_limits, LoadSingleChannelPng
+from Colab.SegmentationRoutine import segment
 
 def start_training():
     start_new_thread(train_and_infer)
@@ -68,6 +68,7 @@ if __name__ =='__main__':
     viewer.layers.append(Shapes(np.load('6.npy', allow_pickle=True), name = '6', shape_type='polygon', face_color='pink'))
     viewer.layers.append(Shapes(np.load('7.npy', allow_pickle=True), name = '7', shape_type='polygon', face_color='blue'))
     viewer.layers.append(Shapes(np.load('8.npy', allow_pickle=True), name = '8', shape_type='polygon', face_color='blue'))
+    viewer.add_image(np.load('mask.npy', allow_pickle=True))
 
     button = QPushButton("Start!")
     button.clicked.connect(start_training)
