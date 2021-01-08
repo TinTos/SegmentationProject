@@ -26,7 +26,7 @@ def segment(overview, polys, labels, tilesize=64, shiftcount=3, coveringthreshol
     ds2 = TileDataset2(overview, 64)
     inference_batchsize = 256
     dl2 = torch.utils.data.DataLoader(ds2, batch_size=int(inference_batchsize))
-    inferred = inference_routine(litmodel.classifier, dl2, overview, 64, labelundecisive, decisionthresh)
+    inferred = inference_routine(litmodel.classifier, dl2, overview, tilesize, labelundecisive, decisionthresh)
 
     np.save('mask', inferred)
     return inferred
