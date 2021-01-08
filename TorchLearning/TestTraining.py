@@ -53,11 +53,11 @@ def inference_routine(net, dataloader, overview, tilesize, labelundecisive = Fal
 
             inputs = preprocess(inputs, isRGB)
 
-            _, outputs = torch.max(torch.sigmoid(net(inputs)), 1)
+            probs, outputs = torch.max(torch.sigmoid(net(inputs)), 1)
             outputs = outputs.cpu().numpy()
 
             for count in range(inds[0].shape[0]):
-                result[inds[0][count] * tilesize : (inds[0][count] + 1) * tilesize, inds[1][count] * tilesize : (inds[1][count] + 1) * tilesize] = outputs[count] if outputs[count] >= decisionthresh or not labelundecisive else -1
+                result[inds[0][count] * tilesize : (inds[0][count] + 1) * tilesize, inds[1][count] * tilesize : (inds[1][count] + 1) * tilesize] = outputs[count] if probs[count] >= decisionthresh or not labelundecisive else -1
 
             del inputs
             del outputs
