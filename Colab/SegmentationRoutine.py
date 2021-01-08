@@ -8,16 +8,16 @@ from TorchLearning.LightningModule import LitModel
 from TorchLearning.TestTraining import inference_routine
 
 
-def segment(overview, polys, labels, tilesize=64, shiftcount=3, coveringthreshold=0.75, model = None):
+def segment(overview, polys, labels, tilesize=64, shiftcount=3, coveringthreshold=0.75, epochs = 6, model = None):
     numclasses = len(np.unique(labels))
 
-    dstrain, dsval = PolyDataset.from_scratch(overview, polys, labels, 64, 3, 0.75).split(0.1)
+    dstrain, dsval = PolyDataset.from_scratch(overview, polys, labels, tilesize, shiftcount, coveringthreshold).split(0.1)
 
     dltrain = torch.utils.data.DataLoader(dstrain, batch_size=64, shuffle=True)
     dlval = torch.utils.data.DataLoader(dsval, batch_size=64, shuffle=True)
 
     litmodel = LitModel(numclasses, 0.1, len(dstrain), 64, model)
-    trainer = Trainer(gpus=1, auto_lr_find=True, max_epochs=7)
+    trainer = Trainer(gpus=1, auto_lr_find=True, max_epochs=epochs)
     trainer.tune(litmodel, train_dataloader=dltrain, val_dataloaders=dlval)
     trainer.fit(litmodel, dltrain, dlval)
     torch.save(litmodel.classifier.state_dict(), 'LastModel')
