@@ -19,7 +19,7 @@ def update_viewer():
     except: print('Something wen wrong')
 
 
-def train_and_infer(viewer):
+def train_and_infer():
     #preprocess
     min_contrast = viewer.layers[0].contrast_limits[0]
     max_contrast = viewer.layers[0].contrast_limits[1]
@@ -68,7 +68,7 @@ if __name__ =='__main__':
     viewer.layers.append(Shapes(np.load('6.npy', allow_pickle=True), name = '6', shape_type='polygon', face_color='pink'))
     viewer.layers.append(Shapes(np.load('7.npy', allow_pickle=True), name = '7', shape_type='polygon', face_color='blue'))
     viewer.layers.append(Shapes(np.load('8.npy', allow_pickle=True), name = '8', shape_type='polygon', face_color='blue'))
-    viewer.add_image(np.load('mask.npy', allow_pickle=True))
+    #viewer.add_image(np.load('mask.npy', allow_pickle=True))
 
     button = QPushButton("Start!")
     button.clicked.connect(start_training)

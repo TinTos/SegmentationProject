@@ -3,10 +3,11 @@ from shapely.geometry import Polygon
 from Dataloading.TileSetBase import TileSetBase
 
 class PolyTileSet(TileSetBase):
-    def __init__(self, size, points, shiftcount, areathreshold):
+    def __init__(self, size, points, shiftcount, areathreshold, overviewshape):
         super(PolyTileSet, self).__init__(size, points, shiftcount)
         self.polygon = Polygon(points)
         self.areathreshold = areathreshold
+        self.overviewshape = overviewshape
         self.initialize()
 
     def initialize(self):
@@ -24,7 +25,7 @@ class PolyTileSet(TileSetBase):
                         rectpolygon = Polygon([(rect['miny'],rect['minx']), (rect['miny'],rect['maxx']), (rect['maxy'],rect['maxx']), (rect['maxy'],rect['minx'])])
                         intersectionarea = rectpolygon.intersection(self.polygon).area
                         fraction = intersectionarea / rectpolygon.area
-                        if fraction > self.areathreshold:
+                        if fraction > self.areathreshold and rect['miny'] >= 0 and rect['minx'] >= 0 and rect['maxy'] < self.overviewshape[-2] and rect['maxx'] < self.overviewshape[-1]:
                             self.tiles.append(rect)
 
     def __len__(self):

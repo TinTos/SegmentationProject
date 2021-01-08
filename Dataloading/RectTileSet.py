@@ -20,7 +20,7 @@ class RectTileSet(TileSetBase):
         if self.inds is not None: item = self.inds[item]
         index_x = int(item % self.count_x)
         index_y = int((item % (self.count_x * self.count_y)) // self.count_x)
-        index_shift_x = int(item // (self.count_x * self.count_y))
+        index_shift_x = int(int(item // (self.count_x * self.count_y)) % self.shiftcount)
         index_shift_y = int(item // (self.count_x * self.count_y * self.shiftcount))
 
         indexdic ={'y' : index_y,

@@ -17,7 +17,7 @@ class PolyDataset(torch.utils.data.Dataset):
             if cls.is_rectangle(p):
                 polysets.append(RectTileSet(tilesize, p, shiftcount))
             else:
-                polysets.append(PolyTileSet(tilesize, p, shiftcount, areathresh))
+                polysets.append(PolyTileSet(tilesize, p, shiftcount, areathresh, overview.shape))
 
         return cls(overview, polysets, labels)
 
