@@ -8,7 +8,7 @@ from TorchLearning.LightningModule import LitModel
 from TorchLearning.TestTraining import inference_routine
 
 
-def segment(overview, polys, labels, tilesize=64, shiftcount=3, coveringthreshold=0.75, epochs = 6, model = None):
+def segment(overview, polys, labels, tilesize=64, shiftcount=3, coveringthreshold=0.75, epochs = 6, model = None, labelundecisive = False, decisionthresh = 0.5):
     numclasses = len(np.unique(labels))
 
     dstrain, dsval = PolyDataset.from_scratch(overview, polys, labels, tilesize, shiftcount, coveringthreshold).split(0.1)
@@ -26,7 +26,7 @@ def segment(overview, polys, labels, tilesize=64, shiftcount=3, coveringthreshol
     ds2 = TileDataset2(overview, 64)
     inference_batchsize = 256
     dl2 = torch.utils.data.DataLoader(ds2, batch_size=int(inference_batchsize))
-    inferred = inference_routine(litmodel.classifier, dl2, overview, 64)
+    inferred = inference_routine(litmodel.classifier, dl2, overview, 64, labelundecisive, decisionthresh)
 
     np.save('mask', inferred)
     return inferred
