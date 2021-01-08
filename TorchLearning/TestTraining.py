@@ -34,11 +34,13 @@ def training_routine(net, dataloader):
     print('Finished Training')
 
 
-def inference_routine(net, dataloader, overview, tilesize, isRGB = False, labelundecisive = False, decisionthresh = 0.5):
+def inference_routine(net, dataloader, overview, tilesize, labelundecisive = False, decisionthresh = 0.5):
 
     with torch.no_grad():
         if (len(overview.shape) == 2):
             overview = overview.reshape((1, overview.shape[0], overview.shape[1]))
+
+        isRGB = overview.shape[0] == 3
 
         tilecounty = int(overview.shape[1] // tilesize)
         tilecountx = int(overview.shape[2] // tilesize)
