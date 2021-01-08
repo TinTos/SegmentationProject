@@ -23,7 +23,7 @@ def segment(overview, polys, labels, tilesize=64, shiftcount=3, coveringthreshol
     torch.save(litmodel.classifier.state_dict(), 'LastModel')
 
     # infer
-    ds2 = TileDataset2(overview, 64)
+    ds2 = TileDataset2(overview, tilesize)
     inference_batchsize = 256
     dl2 = torch.utils.data.DataLoader(ds2, batch_size=int(inference_batchsize))
     inferred = inference_routine(litmodel.classifier, dl2, overview, tilesize, labelundecisive, decisionthresh)
