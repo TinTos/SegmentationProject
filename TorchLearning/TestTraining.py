@@ -34,9 +34,7 @@ def training_routine(net, dataloader):
     print('Finished Training')
 
 
-def inference_routine(net, dataloader, overview, tilesize, isRGB = False):
-    min_debug = np.min(overview)
-    max_debug = np.max(overview)
+def inference_routine(net, dataloader, overview, tilesize, isRGB = False, labelundecisive = False, decisionthresh = 0.5):
 
     with torch.no_grad():
         if (len(overview.shape) == 2):
@@ -57,7 +55,7 @@ def inference_routine(net, dataloader, overview, tilesize, isRGB = False):
             outputs = outputs.cpu().numpy()
 
             for count in range(inds[0].shape[0]):
-                result[inds[0][count] * tilesize : (inds[0][count] + 1) * tilesize, inds[1][count] * tilesize : (inds[1][count] + 1) * tilesize] = outputs[count]
+                result[inds[0][count] * tilesize : (inds[0][count] + 1) * tilesize, inds[1][count] * tilesize : (inds[1][count] + 1) * tilesize] = outputs[count] if outputs[count] >= decisionthresh or not labelundecisive else -1
 
             del inputs
             del outputs

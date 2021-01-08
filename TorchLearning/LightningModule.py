@@ -10,6 +10,8 @@ class LitModel(LightningModule):
         super().__init__()
         if model is 'renset34':
             self.classifier = models.resnet34(pretrained=True)
+        if model is 'renset50':
+            self.classifier = models.resnet50(pretrained=True)
         else:
             self.classifier = models.resnet18(pretrained=True)
 
