@@ -6,6 +6,34 @@ import numpy as np
 from copy import deepcopy
 
 class PolyDataset(torch.utils.data.Dataset):
+    @classmethod
+    def from_scratch_with_adapted_shiftcount(cls, overview, polygons, labels, tilesize, shiftcount, areathresh):
+        tilesize = tilesize
+
+        polysets = []
+        for p in polygons:
+            if cls.is_rectangle(p):
+                polysets.append(RectTileSet(tilesize, p, 1))
+            else:
+                polysets.append(PolyTileSet(tilesize, p, 1, areathresh, overview.shape))
+
+        ls = [len(p) for p in polysets]
+        ls /= max(ls)
+
+        polysets = []
+
+        c = 0
+        for p in polygons:
+            if cls.is_rectangle(p):
+                polysets.append(RectTileSet(tilesize, p, int(shiftcount /  ls[c])))
+            else:
+                polysets.append(PolyTileSet(tilesize, p, int(shiftcount /  ls[c]), areathresh, overview.shape))
+
+            c += 1
+
+
+        return cls(overview, polysets, labels)
+
 
     @classmethod
     def from_scratch(cls, overview, polygons, labels, tilesize, shiftcount, areathresh):
