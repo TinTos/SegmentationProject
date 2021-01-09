@@ -67,5 +67,39 @@ def inference_routine(net, dataloader, overview, tilesize, labelundecisive = Fal
         return result
 
 
+def inference_routine(net, dataloader, overview, tilesize, num_features):
+
+    with torch.no_grad():
+        if (len(overview.shape) == 2):
+            overview = overview.reshape((1, overview.shape[0], overview.shape[1]))
+
+        isRGB = overview.shape[0] == 3
+
+        tilecounty = int(overview.shape[1] // tilesize)
+        tilecountx = int(overview.shape[2] // tilesize)
+        result = np.zeros((num_features,tilecounty*tilesize, tilecountx*tilesize))
+
+        net.eval()
+
+        for i, data in enumerate(dataloader):
+            inputs, inds = data
+
+            inputs = preprocess(inputs, isRGB)
+
+            outputs = torch.sigmoid(net(inputs)).cpu().numpy()
+
+            for count in range(inds[0].shape[0]):
+                result[:,inds[0][count] * tilesize : (inds[0][count] + 1) * tilesize, inds[1][count] * tilesize : (inds[1][count] + 1) * tilesize] = outputs[count]
+
+            del inputs
+            del outputs
+
+            print(str(i) + "/" + str(int(len(dataloader.dataset) // dataloader.batch_size)))
+
+
+
+        return result
+
+
 
 

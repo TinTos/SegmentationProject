@@ -27,7 +27,7 @@ def train_and_infer():
 
     #get data
     labels, rects = get_rects_and_labels(viewer)
-    inferred = segment(labels, ovrscaled, rects)
+    inferred = segment(ovrscaled, rects, labels, 128)
 
     #signal
     global mask
@@ -57,17 +57,17 @@ if __name__ =='__main__':
     if app == None:
         app = QApplication([])
 
-    ovr = LoadSingleChannelPng("C:\\Users\\mtoss\\Documents\\DTCleanup\\SmartCyteAlt\\Probe1_DL.png")
+    ovr = LoadSingleChannelPng("C:\\Users\\mtoss\\Documents\\DTCleanup\\SmartCyteAlt\\Probe1_PK.png")
 
     viewer = napari.view_image(ovr, rgb=False)
-    viewer.layers.append(Shapes(np.load('1.npy', allow_pickle=True), name = '1', shape_type='polygon', face_color='blue'))
-    viewer.layers.append(Shapes(np.load('2.npy', allow_pickle=True), name = '2', shape_type='polygon', face_color='red'))
-    viewer.layers.append(Shapes(np.load('3.npy', allow_pickle=True), name = '3', shape_type='polygon', face_color='green'))
-    viewer.layers.append(Shapes(np.load('4.npy', allow_pickle=True), name = '4', shape_type='polygon', face_color='cyan'))
-    viewer.layers.append(Shapes(np.load('5.npy', allow_pickle=True), name = '5', shape_type='polygon', face_color='blue'))
-    viewer.layers.append(Shapes(np.load('6.npy', allow_pickle=True), name = '6', shape_type='polygon', face_color='pink'))
-    viewer.layers.append(Shapes(np.load('7.npy', allow_pickle=True), name = '7', shape_type='polygon', face_color='blue'))
-    viewer.layers.append(Shapes(np.load('8.npy', allow_pickle=True), name = '8', shape_type='polygon', face_color='blue'))
+    #viewer.layers.append(Shapes(np.load('1.npy', allow_pickle=True), name = '1', shape_type='polygon', face_color='blue'))
+    #viewer.layers.append(Shapes(np.load('2.npy', allow_pickle=True), name = '2', shape_type='polygon', face_color='red'))
+    #viewer.layers.append(Shapes(np.load('3.npy', allow_pickle=True), name = '3', shape_type='polygon', face_color='green'))
+    #viewer.layers.append(Shapes(np.load('4.npy', allow_pickle=True), name = '4', shape_type='polygon', face_color='cyan'))
+    #viewer.layers.append(Shapes(np.load('5.npy', allow_pickle=True), name = '5', shape_type='polygon', face_color='blue'))
+    #viewer.layers.append(Shapes(np.load('6.npy', allow_pickle=True), name = '6', shape_type='polygon', face_color='pink'))
+    #viewer.layers.append(Shapes(np.load('7.npy', allow_pickle=True), name = '7', shape_type='polygon', face_color='blue'))
+    #viewer.layers.append(Shapes(np.load('8.npy', allow_pickle=True), name = '8', shape_type='polygon', face_color='blue'))
     #viewer.add_image(np.load('mask.npy', allow_pickle=True))
 
     button = QPushButton("Start!")

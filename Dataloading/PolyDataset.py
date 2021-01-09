@@ -18,16 +18,16 @@ class PolyDataset(torch.utils.data.Dataset):
                 polysets.append(PolyTileSet(tilesize, p, 1, areathresh, overview.shape))
 
         ls = [len(p) for p in polysets]
-        ls /= max(ls)
+        ls = [l/max(ls) for l in ls]
 
         polysets = []
 
         c = 0
         for p in polygons:
             if cls.is_rectangle(p):
-                polysets.append(RectTileSet(tilesize, p, int(shiftcount /  ls[c])))
+                polysets.append(RectTileSet(tilesize, p, int(np.sqrt(shiftcount /  ls[c]))))
             else:
-                polysets.append(PolyTileSet(tilesize, p, int(shiftcount /  ls[c]), areathresh, overview.shape))
+                polysets.append(PolyTileSet(tilesize, p, int(np.sqrt(shiftcount /  ls[c])), areathresh, overview.shape))
 
             c += 1
 
