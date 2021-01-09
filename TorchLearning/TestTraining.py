@@ -67,7 +67,7 @@ def inference_routine(net, dataloader, overview, tilesize, labelundecisive = Fal
         return result
 
 
-def inference_routine(net, dataloader, overview, tilesize, num_features):
+def cluster_routine(net, dataloader, overview, tilesize, num_features):
 
     with torch.no_grad():
         if (len(overview.shape) == 2):
