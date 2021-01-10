@@ -1,11 +1,13 @@
 import numpy as np
 import torch
 from pytorch_lightning import Trainer
+from torchvision import models
 
 from Dataloading.Dataset import TileDataset2
 from Dataloading.PolyDataset import PolyDataset
+from Dataloading.LabeledImageTileSet import LabeledImageTileSet, LabeledImageDataset
 from TorchLearning.LightningModule import LitModel
-from TorchLearning.TestTraining import inference_routine
+from TorchLearning.TestTraining import inference_routine, cluster_routine, cluster_routine_2
 
 
 def segment(overview, polys, labels, tilesize=64, shiftcount=3, coveringthreshold=0.75, epochs = 6, model = None, labelundecisive = False, decisionthresh = 0.5, adaptiveshiftcount = False):
@@ -14,7 +16,7 @@ def segment(overview, polys, labels, tilesize=64, shiftcount=3, coveringthreshol
     dstrain, dsval = PolyDataset.from_scratch(overview, polys, labels, tilesize, shiftcount, coveringthreshold).split(0.1) if not adaptiveshiftcount else PolyDataset.from_scratch_with_adapted_shiftcount(overview, polys, labels, tilesize, shiftcount, coveringthreshold).split(0.1)
 
     dltrain = torch.utils.data.DataLoader(dstrain, batch_size=64, shuffle=True)
-    dlval = torch.utils.data.DataLoader(dsval, batch_size=64, shuffle=True)
+    dlval = torch.utils.data.DataLoader(dsval, batch_size=64, shuffle=False)
 
     litmodel = LitModel(numclasses, 0.1, len(dstrain), 64, model)
     trainer = Trainer(gpus=1, auto_lr_find=True, max_epochs=epochs)
@@ -30,3 +32,34 @@ def segment(overview, polys, labels, tilesize=64, shiftcount=3, coveringthreshol
 
     np.save('mask', inferred)
     return inferred
+
+
+def segment_unsupervised(overview, num_classes = 8, tilesize_learn = 64, tilesize_cluster = 128, shiftcount = 2, epochs = 6, model = None, labelundecisive = False, decisionthresh = 0.5):
+    ds2 = TileDataset2(overview, tilesize_cluster)
+    inference_batchsize = 256
+    dl2 = torch.utils.data.DataLoader(ds2, batch_size=int(inference_batchsize))
+
+    classifier = models.resnet18(pretrained=True).cuda()
+    labeledimage = cluster_routine(classifier, dl2, overview, tilesize_cluster, 1000, num_classes)
+
+    dstrain, dsval = LabeledImageDataset.from_scratch(overview, labeledimage, tilesize_learn, shiftcount, 0.75, 1).split(0.1)
+
+    dltrain = torch.utils.data.DataLoader(dstrain, batch_size=64, shuffle=True)
+    dlval = torch.utils.data.DataLoader(dsval, batch_size=64, shuffle=False)
+
+    litmodel = LitModel(num_classes, 0.1, len(dstrain), 64, model)
+    trainer = Trainer(gpus=1, auto_lr_find=True, max_epochs=epochs)
+    trainer.tune(litmodel, train_dataloader=dltrain, val_dataloaders=dlval)
+    trainer.fit(litmodel, dltrain, dlval)
+    torch.save(litmodel.classifier.state_dict(), 'LastModel')
+
+    # infer
+    ds2 = TileDataset2(overview, tilesize_learn)
+    inference_batchsize = 256
+    dl2 = torch.utils.data.DataLoader(ds2, batch_size=int(inference_batchsize))
+    inferred = inference_routine(litmodel.classifier, dl2, overview, tilesize_learn, labelundecisive, decisionthresh)
+
+    np.save('mask', inferred)
+    return inferred
+
+
