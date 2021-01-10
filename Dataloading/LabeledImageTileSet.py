@@ -65,9 +65,6 @@ class LabeledImageDataset(torch.utils.data.Dataset):
             self.channelnumber = overview.shape[0]
             self.overview = overview
 
-        self.labels = np.unique(labeledImageTileSet)
-        self.labelsencoded = self.one_hot_encoding()
-
         self.tileset = labeledImageTileSet
 
     @classmethod
@@ -86,31 +83,22 @@ class LabeledImageDataset(torch.utils.data.Dataset):
 
         return tensor_x, tensor_y
 
-    def one_hot_encoding(self):
-        unique = np.unique(self.labels)
 
-        result = []
-        for l in self.labels: result.append((unique == l).astype('int'))
-
-        return result
 
     def split(self, valpercent):
-        rsvals = []
-        rstrains = []
-        for rs in self.polysets:
-            shuffled = np.random.permutation(len(rs))
-            ind = int(valpercent * len(rs))
 
-            val = shuffled[:ind]
-            train = shuffled[ind:]
+        shuffled = np.random.permutation(len(self.tileset))
+        ind = int(valpercent * len(self.tileset))
 
-            rsval = deepcopy(rs)
-            rstrain = deepcopy(rs)
+        val = shuffled[:ind]
+        train = shuffled[ind:]
 
-            rsval.split_train_val(val)
-            rstrain.split_train_val(train)
+        rsval = deepcopy(self.tileset)
+        rstrain = deepcopy(self.tileset)
 
-            rsvals.append(rsval)
-            rstrains.append(rstrain)
+        rsval.split_train_val(val)
+        rstrain.split_train_val(train)
 
-        return LabeledImageDataset(self.overview, rstrains), LabeledImageDataset(self.overview, rsvals)
+
+
+        return LabeledImageDataset(self.overview, rstrain), LabeledImageDataset(self.overview, rsval)
