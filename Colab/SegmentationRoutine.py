@@ -34,7 +34,7 @@ def segment(overview, polys, labels, tilesize=64, shiftcount=3, coveringthreshol
     return inferred
 
 
-def segment_unsupervised(overview, num_classes = 8, tilesize_learn = 64, tilesize_cluster = 128, shiftcount = 2, epochs = 6, model = None, labelundecisive = False, decisionthresh = 0.5):
+def segment_unsupervised(overview, num_classes = 8, tilesize_learn = 64, tilesize_cluster = 128, shiftcount = 2, epochs = 3, model = None, labelundecisive = False, decisionthresh = 0.5):
     ds2 = TileDataset2(overview, tilesize_cluster)
     inference_batchsize = 256
     dl2 = torch.utils.data.DataLoader(ds2, batch_size=int(inference_batchsize))

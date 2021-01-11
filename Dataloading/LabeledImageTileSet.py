@@ -13,6 +13,8 @@ class LabeledImageTileSet(TileSetBase, torch.utils.data.Dataset):
         self.overviewshape = overviewshape
         self.labeledImage = labeledImage
         self.minlabel = minlabel
+        self.labels = np.sort(np.unique(labeledImage))
+        self.labels = self.labels[self.labels >= minlabel]
         self.initialize()
 
     @classmethod
@@ -42,6 +44,7 @@ class LabeledImageTileSet(TileSetBase, torch.utils.data.Dataset):
 
                             if label < self.minlabel: continue
 
+                            label = (self.labels == label).astype('int')
                             self.tiles.append((rect, label))
 
     def __len__(self):

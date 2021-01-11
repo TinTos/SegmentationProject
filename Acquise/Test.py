@@ -8,16 +8,26 @@ from PySide2.QtCore import Signal
 from PySide2.QtWidgets import QApplication, QPushButton
 import numpy as np
 from Colab.Processing import scale_with_limits, LoadSingleChannelPng
-from Colab.SegmentationRoutine import segment
+from Colab.SegmentationRoutine import segment, segment_unsupervised
 
 def start_training():
-    start_new_thread(train_and_infer)
+    start_new_thread(test_cluster)
 
 
 def update_viewer():
     try: viewer.add_image(mask)
     except: print('Something wen wrong')
 
+
+def test_cluster():
+    min_contrast = viewer.layers[0].contrast_limits[0]
+    max_contrast = viewer.layers[0].contrast_limits[1]
+    ovrscaled = scale_with_limits(ovr, min_contrast, max_contrast)
+    inferred = segment_unsupervised(ovrscaled)
+
+    global mask
+    mask = inferred
+    f.finished.emit()
 
 def train_and_infer():
     #preprocess
@@ -57,7 +67,8 @@ if __name__ =='__main__':
     if app == None:
         app = QApplication([])
 
-    ovr = LoadSingleChannelPng("C:\\Users\\mtoss\\Documents\\DTCleanup\\SmartCyteAlt\\Probe1_PK.png")
+    ovr = LoadSingleChannelPng("C:\\Users\\mtoss\\Documents\\DTCleanup\\SmartCyteAlt\\Probe1_DL.png")
+    ovr = ovr[64:ovr.shape[0]-64, 64:ovr.shape[1]-64]
 
     viewer = napari.view_image(ovr, rgb=False)
     #viewer.layers.append(Shapes(np.load('1.npy', allow_pickle=True), name = '1', shape_type='polygon', face_color='blue'))

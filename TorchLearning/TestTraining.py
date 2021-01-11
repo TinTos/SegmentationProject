@@ -104,11 +104,12 @@ def cluster_routine(net, dataloader, overview, tilesize, num_features, num_clust
         dists = traf[range(result.shape[0]), kmeans.labels_]
         r = np.zeros((dists.shape)).astype(np.bool)
         for l in np.unique(kmeans.labels_):
-            #r[kmeans.labels_ == l] = dists[kmeans.labels_ == l] - np.mean(dists[kmeans.labels_ == l]) < 0
-            r[kmeans.labels_ == l] = True
+            r[kmeans.labels_ == l] = dists[kmeans.labels_ == l] - np.mean(dists[kmeans.labels_ == l]) < 0
+            #r[kmeans.labels_ == l] = True
 
 
-        labeledim = np.zeros((tilecounty * tilesize, tilecountx * tilesize))
+        labeledim = np.ones((tilecounty * tilesize, tilecountx * tilesize))
+        labeledim *= -1
         for i in range(len(r)):
             indices = (int(i // tilecountx), int(i % tilecountx))
             if r[i] == True: labeledim[indices[0] * tilesize : (indices[0] + 1) * tilesize, indices[1] * tilesize : (indices[1] + 1) * tilesize] = kmeans.labels_[i]
@@ -166,8 +167,8 @@ def cluster_routine_2(dataloader, overview, tilesize, num_features, num_clusters
         dists = traf[range(result.shape[0]), kmeans.labels_]
         r = np.zeros((dists.shape)).astype(np.bool)
         for l in np.unique(kmeans.labels_):
-            #r[kmeans.labels_ == l] = dists[kmeans.labels_ == l] - np.mean(dists[kmeans.labels_ == l]) < 0
-            r[kmeans.labels_ == l] = True
+            r[kmeans.labels_ == l] = dists[kmeans.labels_ == l] - np.mean(dists[kmeans.labels_ == l]) < 0
+            #r[kmeans.labels_ == l] = True
 
 
         labeledim = np.zeros((tilecounty, tilecountx))
