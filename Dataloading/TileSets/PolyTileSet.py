@@ -1,6 +1,5 @@
-import numpy as np
 from shapely.geometry import Polygon
-from Dataloading.TileSetBase import TileSetBase
+from Dataloading.TileSets.TileSetBase import TileSetBase
 
 class PolyTileSet(TileSetBase):
     def __init__(self, size, points, shiftcount, areathreshold, overviewshape):

@@ -1,4 +1,4 @@
-from Dataloading.RectTileSet import RectTileSet
+from Dataloading.TileSets.RectTileSet import RectTileSet
 import torch
 import torch.utils.data
 import numpy as np

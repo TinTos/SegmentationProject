@@ -1,5 +1,5 @@
-from Dataloading.RectTileSet import RectTileSet
-from Dataloading.PolyTileSet import PolyTileSet
+from Dataloading.TileSets.RectTileSet import RectTileSet
+from Dataloading.TileSets.PolyTileSet import PolyTileSet
 import torch
 import torch.utils.data
 import numpy as np

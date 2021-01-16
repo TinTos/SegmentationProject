@@ -1,5 +1,4 @@
-import numpy as np
-from Dataloading.TileSetBase import TileSetBase
+from Dataloading.TileSets.TileSetBase import TileSetBase
 
 class RectTileSet(TileSetBase):
     def __init__(self, size, points, shiftcount):
