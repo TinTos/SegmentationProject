@@ -3,7 +3,6 @@ import torch.nn as nn
 import torch
 import numpy as np
 from TorchLearning.PretrainedModel import preprocess
-from TorchLearning.PretrainedModel import preprocess_for_custom
 from sklearn.cluster import KMeans
 
 def training_routine(net, dataloader):

@@ -3,8 +3,9 @@ import numpy as np
 import torch.nn.functional as F
 from torchvision import transforms
 
-class InferenceDataset():
+class InferenceDataset(torch.utils.data.Dataset):
     def __init__(self, overview, tilesize, stepsize, batchsize):
+        super(InferenceDataset, self).__init__()
         self.tilesize = tilesize
         if len(overview.shape) == 2:
             self.channelnumber = 1
@@ -25,7 +26,11 @@ class InferenceDataset():
         self.stepsize = stepsize
 
     def __len__(self):
-        return int(np.ceil(self.tilecountx * self.tilecounty / self.batchsize))
+        return self.tilecountx * self.tilecounty
+
+    @property
+    def batchcount(self):
+        return int(np.ceil(len(self) / self.batchsize))
 
     def __getitem__(self, idx):
         bx = int((idx % (self.tilecounty * self.tilecountx)) % self.tilecountx)
@@ -59,7 +64,7 @@ class InferenceDataset():
 
     def infer(self, model, ongpu, sigmoid, thresh = 0):
         result = np.zeros((self.overview.shape[-2], self.overview.shape[-1]))
-        for bi in range(len(self)):
+        for bi in range(self.batchcount):
             batch, inds = self.get_batch(bi)
             batch = torch.from_numpy(batch)
             if ongpu: batch = batch.cuda()
