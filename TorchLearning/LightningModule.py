@@ -2,7 +2,7 @@ from pytorch_lightning import LightningModule
 from torchvision import models, transforms
 import torch.nn as nn
 import torch
-from TorchLearning.PretrainedModel import preprocess
+import torch.nn.functional as F
 
 class LitModel(LightningModule):
 
@@ -40,7 +40,7 @@ class LitModel(LightningModule):
 
     def training_step(self, batch, batch_idx, isRGB = False):
         x, y = batch
-        x = preprocess(x, isRGB)
+        x = self.preprocess(x, isRGB)
         outputs = self(x)
         loss = self.lossobject(outputs, y)
 
@@ -48,7 +48,7 @@ class LitModel(LightningModule):
 
     def validation_step(self, batch, batch_idx, isRGB = False):
         x, y = batch
-        x = preprocess(x, isRGB)
+        x = self.preprocess(x, isRGB)
         outputs = self(x)
         _, preds = torch.max(outputs, 1)
         _, comparisonlabel = torch.max(y, 1)
@@ -62,11 +62,21 @@ class LitModel(LightningModule):
 
     def test_step(self, batch, batch_idx, isRGB = False):
         x, y = batch
-        x = preprocess(x, isRGB)
+        x = self.preprocess(x, isRGB)
         outputs = self(x)
         _, preds = torch.max(outputs, 1)
         _, comparisonlabel = torch.max(y, 1)
         val_loss = torch.sum(preds == comparisonlabel) / batch.shape[0]
 
         return val_loss
+
+    def preprocess(cls, inputs, isRGB):
+        if not isRGB: inputs = inputs.repeat(1, 3, 1, 1)
+        inputs = inputs - inputs.view(inputs.shape[0], 3, inputs.shape[-1] * inputs.shape[-1]).min(axis=2)[0].reshape(
+            inputs.shape[0], 3, 1, 1)
+        inputs = inputs / inputs.view(inputs.shape[0], 3, inputs.shape[-1] * inputs.shape[-1]).max(axis=2)[0].reshape(
+            inputs.shape[0], 3, 1, 1)
+        inputs = F.interpolate(inputs, size=224)
+        inputs = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])(inputs)
+        return inputs
 

@@ -8,7 +8,7 @@ from PySide2.QtCore import Signal
 from PySide2.QtWidgets import QApplication, QPushButton
 import numpy as np
 from Colab.Processing import scale_with_limits, LoadSingleChannelPng
-from Colab.SegmentationRoutine import segment, segment_unsupervised, segmenttest
+from Colab.SegmentationRoutine import segment, segment_unsupervised
 
 def start_training():
     start_new_thread(train_and_infer)
@@ -37,7 +37,7 @@ def train_and_infer():
 
     #get data
     labels, rects = get_rects_and_labels(viewer)
-    inferred = segmenttest(ovrscaled, rects, labels, 128)
+    inferred = segment(ovrscaled, rects, labels, 128)
 
     #signal
     global mask
