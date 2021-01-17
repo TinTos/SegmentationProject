@@ -96,7 +96,7 @@ class InferenceDataset(torch.utils.data.Dataset):
 
 
 
-    def infer_flattened(self, model, doRGB):
+    def infer_flattened(self, model, doRGB, sigmoid = True):
         dataloader = torch.utils.data.DataLoader(self, batch_size=self.batchsize, shuffle=False)
         result = {}
         model.eval()
@@ -108,7 +108,9 @@ class InferenceDataset(torch.utils.data.Dataset):
                 indsy = inds[0].cpu().numpy()
                 indsx = inds[1].cpu().numpy()
 
-                outputs = model(inputs).cpu().numpy()
+                outputs = model(inputs)
+                if sigmoid: outputs = torch.sigmoid(outputs)
+                outputs = outputs.cpu().numpy()
 
                 outputs[np.isnan(outputs)] = 0
 
