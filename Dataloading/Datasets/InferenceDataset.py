@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 import torch.nn.functional as F
-from torchvision import transforms
+from torchvision import transforms, models
 
 class InferenceDataset(torch.utils.data.Dataset):
     def __init__(self, overview, tilesize, stepsize, batchsize):
@@ -52,8 +52,10 @@ class InferenceDataset(torch.utils.data.Dataset):
 
         return batch, inds
 
-    def preprocess(self, inputs):
-        if self.channelnumber != 3: inputs = inputs.repeat(1, 3, 1, 1)
+    def preprocess(self, inputs, doRGB = True, onGPU = True):
+        if type(inputs) is np.ndarray: inputs = torch.from_numpy(inputs.astype(np.float32))
+        if onGPU: inputs = inputs.cuda()
+        if self.channelnumber == 1 and doRGB: inputs = inputs.repeat(1, 3, 1, 1)
         inputs = inputs - inputs.view(inputs.shape[0], 3, inputs.shape[-1] * inputs.shape[-1]).min(axis=2)[0].reshape(
             inputs.shape[0], 3, 1, 1)
         inputs = inputs / inputs.view(inputs.shape[0], 3, inputs.shape[-1] * inputs.shape[-1]).max(axis=2)[0].reshape(
@@ -62,23 +64,58 @@ class InferenceDataset(torch.utils.data.Dataset):
         inputs = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])(inputs)
         return inputs
 
-    def infer(self, model, ongpu, sigmoid, thresh = 0):
-        result = np.zeros((self.overview.shape[-2], self.overview.shape[-1]))
-        for bi in range(self.batchcount):
-            batch, inds = self.get_batch(bi)
-            batch = torch.from_numpy(batch)
-            if ongpu: batch = batch.cuda()
-            batch = self.preprocess(batch)
-            infers = model(batch)
-            if sigmoid: infers = torch.sigmoid(infers)
-            probs, labels = torch.max(infers, 1)
-            labels = labels.cpu().numpy()
-            c = 0
-            for iy, ix in inds:
-                result[iy*self.stepsize : (iy+1)*self.stepsize, ix*self.stepsize : (ix+1)*self.stepsize] = (labels[c] if probs[c] >= thresh else -1)
-                c += 1
+    def label_overview(self, model, ongpu, sigmoid, thresh = 0, doRGB = True):
+        with torch.no_grad():
+            result = np.zeros((self.overview.shape[-2], self.overview.shape[-1]))
+            for bi in range(self.batchcount):
+                batch, inds = self.get_batch(bi)
+                batch = torch.from_numpy(batch)
+                if ongpu: batch = batch.cuda()
+                batch = self.preprocess(batch, doRGB)
+                infers = model(batch)
+                if sigmoid: infers = torch.sigmoid(infers)
+                probs, labels = torch.max(infers, 1)
+                labels = labels.cpu().numpy()
+                c = 0
+                for iy, ix in inds:
+                    result[iy*self.stepsize : (iy+1)*self.stepsize, ix*self.stepsize : (ix+1)*self.stepsize] = (labels[c] if probs[c] >= thresh else -1)
+                    c += 1
 
-        return result
+            return result
 
 
 
+    def infer_flattened(self, model, doRGB):
+        dataloader = torch.utils.data.DataLoader(self, batch_size=self.batchsize, shuffle=False)
+        result = {}
+        model.eval()
+
+        with torch.no_grad():
+            for i, data in enumerate(dataloader):
+                inputs, inds = data
+                inputs = self.preprocess(inputs, doRGB)
+                indsy = inds[0].cpu().numpy()
+                indsx = inds[1].cpu().numpy()
+
+                outputs = model(inputs).cpu().numpy()
+
+                outputs[np.isnan(outputs)] = 0
+
+                for count in range(inds[0].shape[0]):
+                    result[(indsy[count], indsx[count])] = outputs[count]
+
+                del inputs
+                del outputs
+
+                print(str(i) + "/" + str(int(len(dataloader.dataset) // dataloader.batch_size)))
+
+            return result
+
+
+
+if __name__ == "__main__":
+    ov = np.zeros((1024,1024))
+    ids = InferenceDataset(ov, 64, 64, 128)
+    m = models.resnet18(True)
+    r = ids.infer_flattened(m, True)
+    print(r)

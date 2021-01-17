@@ -2,6 +2,8 @@ import torch.optim as optim
 import torch.nn as nn
 import torch
 import numpy as np
+
+from Dataloading.Datasets.InferenceDataset import InferenceDataset
 from TorchLearning.PretrainedModel import preprocess
 from sklearn.cluster import KMeans
 
@@ -69,54 +71,27 @@ def inference_routine(net, dataloader, overview, tilesize, labelundecisive = Fal
 
 
 def cluster_routine(net, dataloader, overview, tilesize, num_features, num_clusters):
-    with torch.no_grad():
-        if (len(overview.shape) == 2):
-            overview = overview.reshape((1, overview.shape[0], overview.shape[1]))
+    ids = InferenceDataset(overview, tilesize, tilesize, 256)
+    result = ids.infer_flattened(net, True)
+    result_features = np.array(list(result.values()))
+    result_inds = list(result.keys())
 
-        isRGB = overview.shape[0] == 3
+    kmeans = KMeans(n_clusters=num_clusters, random_state=0).fit(result_features)
+    traf = KMeans(n_clusters=num_clusters, random_state=0).fit_transform(result_features)
+    dists = traf[range(result_features.shape[0]), kmeans.labels_]
+    r = np.zeros((dists.shape)).astype(np.bool)
+    for l in np.unique(kmeans.labels_):
+        r[kmeans.labels_ == l] = dists[kmeans.labels_ == l] - np.mean(dists[kmeans.labels_ == l]) < 0
+        #r[kmeans.labels_ == l] = True
 
-        tilecounty = int(overview.shape[1] // tilesize)
-        tilecountx = int(overview.shape[2] // tilesize)
-
-        result = np.zeros((tilecounty * tilecountx,num_features))
-        net.eval()
-
-        for i, data in enumerate(dataloader):
-            inputs, inds = data
-
-            inputs = preprocess(inputs, isRGB)
-
-            outputs = net(inputs).cpu().numpy()
-
-            outputs[np.isnan(outputs)] = 0
-
-            for count in range(inds[0].shape[0]):
-                result[inds[0][count] * tilecountx + inds[1][count]] = outputs[count]
-
-            del inputs
-            del outputs
-
-            print(str(i) + "/" + str(int(len(dataloader.dataset) // dataloader.batch_size)))
-
-        kmeans = KMeans(n_clusters=num_clusters, random_state=0).fit(result)
-        traf = KMeans(n_clusters=num_clusters, random_state=0).fit_transform(result)
-        dists = traf[range(result.shape[0]), kmeans.labels_]
-        r = np.zeros((dists.shape)).astype(np.bool)
-        for l in np.unique(kmeans.labels_):
-            r[kmeans.labels_ == l] = dists[kmeans.labels_ == l] - np.mean(dists[kmeans.labels_ == l]) < 0
-            #r[kmeans.labels_ == l] = True
+    labeledim = np.ones((ids.tilecounty * tilesize, ids.tilecountx * tilesize))
+    labeledim *= -1
+    for i in range(len(r)):
+        indices = result_inds[i]
+        if r[i] == True: labeledim[indices[0] * tilesize : (indices[0] + 1) * tilesize, indices[1] * tilesize : (indices[1] + 1) * tilesize] = kmeans.labels_[i]
 
 
-        labeledim = np.ones((tilecounty * tilesize, tilecountx * tilesize))
-        labeledim *= -1
-        for i in range(len(r)):
-            indices = (int(i // tilecountx), int(i % tilecountx))
-            if r[i] == True: labeledim[indices[0] * tilesize : (indices[0] + 1) * tilesize, indices[1] * tilesize : (indices[1] + 1) * tilesize] = kmeans.labels_[i]
-
-
-
-
-        return labeledim
+    return labeledim
 
 
 
