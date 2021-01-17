@@ -64,7 +64,18 @@ class InferenceDataset(torch.utils.data.Dataset):
         inputs = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])(inputs)
         return inputs
 
-    def label_overview(self, model, ongpu, sigmoid, thresh = 0, doRGB = True):
+    def label_overview(self, resultdic, thresh = 0):
+        result = np.zeros((self.overview.shape[-2], self.overview.shape[-1]))
+
+        for i in resultdic:
+            probs = resultdic[i]
+            maxprob = np.max(probs)
+            l = np.argmax(probs)
+            result[i[0]*self.stepsize : (i[0]+1)*self.stepsize, i[1]*self.stepsize : (i[1]+1)*self.stepsize] = (l if maxprob >= thresh else -1)
+
+        return result
+
+    def label_overview_custom(self, model, ongpu, sigmoid, thresh = 0, doRGB = True):
         with torch.no_grad():
             result = np.zeros((self.overview.shape[-2], self.overview.shape[-1]))
             for bi in range(self.batchcount):
