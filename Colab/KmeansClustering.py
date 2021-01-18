@@ -3,7 +3,7 @@ import numpy as np
 from Dataloading.Datasets.InferenceDataset import InferenceDataset
 
 
-def cluster_routine(net, overview, tilesize, num_clusters, batchsize, labelsureonly):
+def cluster_routine(net, overview, tilesize, num_clusters, batchsize, labelsureonly=True):
     ids = InferenceDataset(overview, tilesize, tilesize, batchsize)
     result = ids.infer_flattened(net, True)
     result_features = np.array(list(result.values()))
