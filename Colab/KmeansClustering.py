@@ -3,7 +3,7 @@ import numpy as np
 from Dataloading.Datasets.InferenceDataset import InferenceDataset
 
 
-def cluster_routine(net, overview, tilesize, num_clusters, batchsize):
+def cluster_routine(net, overview, tilesize, num_clusters, batchsize, labelsureonly):
     ids = InferenceDataset(overview, tilesize, tilesize, batchsize)
     result = ids.infer_flattened(net, True)
     result_features = np.array(list(result.values()))
@@ -15,7 +15,7 @@ def cluster_routine(net, overview, tilesize, num_clusters, batchsize):
     labeledim *= -1
     for i in range(len(ccff)):
         indices = result_inds[i]
-        if ccff[i] == True: labeledim[indices[0] * tilesize : (indices[0] + 1) * tilesize, indices[1] * tilesize : (indices[1] + 1) * tilesize] = kmeans.labels_[i]
+        if ccff[i] == True or not labelsureonly: labeledim[indices[0] * tilesize : (indices[0] + 1) * tilesize, indices[1] * tilesize : (indices[1] + 1) * tilesize] = kmeans.labels_[i]
 
 
     return labeledim
