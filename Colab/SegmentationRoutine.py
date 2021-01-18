@@ -38,9 +38,9 @@ def fit_model(dltrain, dlval, epochs, litmodel):
     torch.save(litmodel.classifier.state_dict(), 'LastModel')
 
 
-def segment_unsupervised(overview, num_classes = 8, tilesize_learn = 64, tilesize_cluster = 128, shiftcount = 2, epochs = 1, model = None, labelundecisive = False, decisionthresh = 0.5):
+def segment_unsupervised(overview, num_classes = 8, tilesize_learn = 64, tilesize_cluster = 128, shiftcount = 2, epochs = 3, model = None, labelsureonly = True, decisionthresh = 0.5):
     classifier = models.resnet18(pretrained=True).cuda()
-    labeledimage = cluster_routine(classifier, overview, tilesize_cluster, num_classes, 256)
+    labeledimage = cluster_routine(classifier, overview, tilesize_cluster, num_classes, 256, labelsureonly)
 
     #return labeledimage
 
