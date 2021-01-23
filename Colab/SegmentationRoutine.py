@@ -43,8 +43,6 @@ def segment_unsupervised(overview, num_classes = 8, tilesize_learn = 64, tilesiz
     classifier = models.resnet18(pretrained=True).cuda()
     labeledimage = cluster_routine(classifier, overview, tilesize_cluster, num_classes, 256, labelsureonly)
 
-    #return labeledimage
-
     dstrain, dsval = LabeledImageDataset.from_scratch(overview, labeledimage, tilesize_learn, shiftcount, 0.75, 0).split(0.1)
 
     dltrain = torch.utils.data.DataLoader(dstrain, batch_size=64, shuffle=True)
@@ -56,7 +54,7 @@ def segment_unsupervised(overview, num_classes = 8, tilesize_learn = 64, tilesiz
     # infer
     ds2 = InferenceDataset(overview, tilesize_learn, tilesize_learn, 256)
 
-    inf_flat = ds2.infer_flattened(litmodel.classifier, True)
+    inf_flat = ds2.infer_flattened(litmodel.classifier.cuda(), True)
     inferred = ds2.label_overview(inf_flat)
     np.save('mask', inferred)
     return inferred
