@@ -34,7 +34,8 @@ def segment(overview, polys, labels, tilesize=64, shiftcount=3, coveringthreshol
 def fit_model(dltrain, dlval, epochs, litmodel):
     trainer = Trainer(gpus=1, auto_lr_find=True, max_epochs=epochs)
     trainer.tune(litmodel, train_dataloader=dltrain, val_dataloaders=dlval)
-    trainer.fit(litmodel, dltrain, dlval)
+    trainer2 = Trainer(gpus=1, auto_lr_find=True, max_epochs=epochs)
+    trainer2.fit(litmodel, dltrain, dlval)
     torch.save(litmodel.classifier.state_dict(), 'LastModel')
 
 
