@@ -3,18 +3,18 @@ from sklearn.mixture import GaussianMixture
 import numpy as np
 from Dataloading.Datasets.InferenceDataset import InferenceDataset
 
-def gmm_cluster_features(net, overview, tilesize, num_clusters, batchsize, doSigmoid, tilesizeresult = 1):
+def gmm_cluster_features(net, overview, tilesize, num_clusters, batchsize, doSigmoid):
     ids = InferenceDataset(overview, tilesize, tilesize, batchsize)
     result = ids.infer_flattened(net, True, doSigmoid)
     result_features = np.array(list(result.values()))
     result_inds = list(result.keys())
 
     probs = gmm_cluster_probs(num_clusters, result_features)
-    labeledim = np.ones((num_clusters, ids.tilecounty * tilesizeresult, ids.tilecountx * tilesizeresult))
+    labeledim = np.ones((num_clusters, ids.tilecounty, ids.tilecountx))
 
     for i in range(probs.shape[0]):
         indices = result_inds[i]
-        labeledim[:,indices[0] * tilesizeresult : (indices[0] + 1) * tilesizeresult, indices[1] * tilesizeresult : (indices[1] + 1) * tilesizeresult] = probs[i]
+        labeledim[:,indices[0], indices[1]] = probs[i]
 
 
     return labeledim
