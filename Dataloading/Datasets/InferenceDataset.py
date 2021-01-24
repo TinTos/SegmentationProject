@@ -75,6 +75,16 @@ class InferenceDataset(torch.utils.data.Dataset):
 
         return result
 
+    def label_feature_overview(self, resultdic):
+        num_feats = list(resultdic.values())[0].shape[0]
+        result = np.zeros((num_feats, self.tilecounty, self.tilecountx))
+
+        for i in resultdic:
+            probs = resultdic[i]
+            result[:, i[0], i[1]] = probs
+
+        return result
+
     def label_overview_custom(self, model, ongpu, sigmoid, thresh = 0, doRGB = True):
         with torch.no_grad():
             result = np.zeros((self.overview.shape[-2], self.overview.shape[-1]))
