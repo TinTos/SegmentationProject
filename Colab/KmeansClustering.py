@@ -14,7 +14,7 @@ def gmm_cluster_features(net, overview, tilesize, num_clusters, batchsize, doSig
 
     for i in range(probs.shape[0]):
         indices = result_inds[i]
-        labeledim[indices[0] * tilesizeresult : (indices[0] + 1) * tilesizeresult, indices[1] * tilesizeresult : (indices[1] + 1) * tilesizeresult] = probs[i]
+        labeledim[:,indices[0] * tilesizeresult : (indices[0] + 1) * tilesizeresult, indices[1] * tilesizeresult : (indices[1] + 1) * tilesizeresult] = probs[i]
 
 
     return labeledim
