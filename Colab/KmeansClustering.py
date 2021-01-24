@@ -64,7 +64,7 @@ def gmm_cluster(num_clusters, result_features, thresh):
 
     return labels, ccff
 
-def gmm_cluster_probs(num_clusters, result_features, thresh):
+def gmm_cluster_probs(num_clusters, result_features):
     gmm = GaussianMixture(n_components=num_clusters, random_state=0).fit(result_features)
     probs = gmm.predict_proba(result_features)
 
