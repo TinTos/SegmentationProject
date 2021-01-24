@@ -4,9 +4,9 @@ import numpy as np
 from Dataloading.Datasets.InferenceDataset import InferenceDataset
 
 
-def cluster_routine(net, overview, tilesize, num_clusters, batchsize, labelsureonly=True, thresh = 0.5, algo = 'kmeans'):
+def cluster_routine(net, overview, tilesize, num_clusters, batchsize, doSigmoid, labelsureonly=True, thresh = 0.5, algo = 'kmeans'):
     ids = InferenceDataset(overview, tilesize, tilesize, batchsize)
-    result = ids.infer_flattened(net, True)
+    result = ids.infer_flattened(net, True, doSigmoid)
     result_features = np.array(list(result.values()))
     result_inds = list(result.keys())
 
