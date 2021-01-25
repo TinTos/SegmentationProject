@@ -1,6 +1,8 @@
 import numpy as np
 from PIL import Image
 
+from Dataloading.TileSets.PolyTileSet import PolyTileSet
+
 
 def vote_filter(segmask):
     for y in range(1, segmask.shape[0] - 1):
@@ -36,3 +38,17 @@ def LoadSingleChannelPng(path):
     del ImageRaw
 
     return ovr
+
+def get_unary_potential(labels, polys, ts, overviewshape, areathresh):
+    labelsunique = np.unique(labels)
+    nchan = labelsunique.shape[0]
+    result = np.zeros((nchan, overviewshape[-2] // ts, overviewshape[-1] // ts))
+    c = 0
+    for l in labels:
+      pts = PolyTileSet(ts, polys[c], 1, areathresh, overviewshape)
+      ch = np.where(labelsunique == l)
+      for t in pts.tiles:
+        result[ch, t['maxy'] // ts, t['maxx'] // ts] = 1
+      c += 1
+
+    return result
