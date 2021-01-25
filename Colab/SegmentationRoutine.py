@@ -23,7 +23,7 @@ def segment(overview, polys, labels, tilesize=64, shiftcount=3, coveringthreshol
     # infer
     inference_batchsize = 256
     ds2 = InferenceDataset(overview, tilesize, tilesize, inference_batchsize)
-    resultdic = ds2.infer_flattened(litmodel.classifier, True)
+    resultdic = ds2.infer_flattened(litmodel.classifier.cuda(), True)
 
     inferred = ds2.label_overview(resultdic)
 
